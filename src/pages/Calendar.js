@@ -20,12 +20,11 @@ function Calendar(props) {
     return result;
   }
 
-let daysofMonth = getDaysArray(2022,9);
-let thisweekdays=daysofMonth.filter((d,ind)=>d.split('-')[1]==='Thursday')
+  let daysofMonth = getDaysArray(2022,9);
+  let daysofPastMonth = getDaysArray(2022,8);
+  let daysofNextMonth = getDaysArray(2022,10);
 let firstDay;
-//daysofMonth.filter((d,ind)=>{if(d.split('-')[0]==='1') {firstDay= ind}})
-console.log(firstDay);
-console.log(thisweekdays)
+let nextDaysMonth=0;
   return (
     <div className="container">
         <h1>Calendar</h1> 
@@ -37,9 +36,11 @@ console.log(thisweekdays)
               firstDay=placement;
             }
             if(firstDay===undefined){
-              thisweekdays= ['',...thisweekdays]
+              thisweekdays= [daysofPastMonth[daysofPastMonth.findLastIndex((t) => (t.split('-')[1]===day))],...thisweekdays]
+            //  pastDaysMonth--;
             }else if(placement>firstDay && thisweekdays.length<5){
-              thisweekdays= [...thisweekdays,'']
+              thisweekdays= [...thisweekdays,daysofNextMonth[nextDaysMonth]]
+              nextDaysMonth++;
             }
          console.log(thisweekdays);
             return (
@@ -49,7 +50,8 @@ console.log(thisweekdays)
             </div>
             { thisweekdays.map((week,w)=>{
             return (
-            <div className='buttonDays'>
+            <div className='buttonDays' style={{color:week.split('-')[1]==='Sunday' || week.split('-')[1]==='Saturday'?'blue':'black',
+            backgroundColor:week.split('-')[1]==='Sunday' || week.split('-')[1]==='Saturday'?'lightgrey':'white'}}>
          
             {week ?week.split('-')[0]:''}
             
