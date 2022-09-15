@@ -93,9 +93,16 @@ let nextDaysMonth=0;
               setthisopenReminder(week)
             }}
             >
-         
+             <div>
             {week ?week.split('-')[0]:''}
-            
+            </div>
+            {reminder && reminder[week] && reminder[week].map((dot)=>{
+              return <Text label='dd' onMouseOver={'dfdv'} style={{color:'yellow'}} >{dot.time} <br/></Text>
+            })}
+           {/*   {reminder && reminder[week] ?
+             <a style={{color:'yellow'}} label={'dvd'}>reminder[week].length+ ' Reminder(s)'
+              </a>
+              :null} */}
             </div>)
             })}
           
