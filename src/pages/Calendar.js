@@ -15,7 +15,7 @@ function Calendar(props) {
   // Be creative
   const days =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] ;
   //const time = ['00:00','01:00'] for select time
-  const [reminder, setReminder] = useState({'28-Sunday':{time:'00:00',day:'28-Sunday',city:'Athens',reminder:'GoToMAS'}});
+  const [reminder, setReminder] = useState({'28-Sunday':[{time:'00:00', day:'28-Sunday',city:'Athens',reminder:'GoToMAS'}]});
   const [openReminder, setOpenReminder] = useState(false);
   const [thisopenReminder, setthisopenReminder] = useState('28-Sunday');
   useEffect(() => {
@@ -33,10 +33,24 @@ function Calendar(props) {
     }
     return result;
   }
-  const handleReminderChange = (event) => {
-    console.log(thisopenReminder);
-    setReminder({...reminder,[thisopenReminder]:{...reminder[thisopenReminder],[event.target.id]:event.target.value}})
+  const handleReminderChange = (event,index) => {
+    console.log(reminder);
+    let editReminder={...reminder};
+    editReminder[thisopenReminder][index]={ ...editReminder[thisopenReminder][index],[event.target.id]:event.target.value}
+    setReminder(editReminder)
+    console.log(reminder);
 
+  }
+
+  const addNewReminder = () =>{
+    let newReminder={...reminder};
+    if(newReminder[thisopenReminder] === undefined){
+      newReminder={...newReminder,[thisopenReminder]:[{time:'',city:'',reminder:''}]};
+    }else{
+      newReminder[thisopenReminder].push({time:'',city:'',reminder:''});
+    }
+    setReminder(newReminder); 
+ 
   }
   let daysofMonth = getDaysArray(2022,9);
   let daysofPastMonth = getDaysArray(2022,8);
@@ -95,18 +109,23 @@ let nextDaysMonth=0;
     backgroundColor:'yellow',
     position: 'absolute',
     maxHeight: '40%',
-    padding: '1%'
+    padding: '1%',
+    overflowY: 'scroll'
   }}
   sx={{
     mx: 'auto',
     px: 3
   }}>
    <Heading> Reminder for {thisopenReminder}<Button variant='outline' mr={1} onClick={e=>setOpenReminder(false)}>X</Button></Heading> 
-<div style={{display:'flex'}}>
-<Input
+{console.log(reminder[thisopenReminder])} 
+{reminder && reminder[thisopenReminder] && reminder[thisopenReminder].map((day,index)=>{
+ return <React.Fragment>
+  <div style={{display:'flex'}}>
+  <Input
     id='time'
     name='time'
     type='string'
+    key={'time'+thisopenReminder+index}
     sx={{
       maxWidth: 100,
       mx: 'auto',
@@ -114,11 +133,11 @@ let nextDaysMonth=0;
     }}
     maxLength={5}
     placeholder='etc 01:12'
-    value={reminder && reminder[thisopenReminder] && reminder[thisopenReminder].time}
-    onChange = {handleReminderChange}
+    value={day.time}
+    onChange = {e=>handleReminderChange(e,index)}
   />
 
-  <Select
+{/*   <Select
     id='timeh'
     name='timeh'
     sx={{
@@ -133,31 +152,36 @@ let nextDaysMonth=0;
         key='am'>
         am
       </option>
-  </Select>
+  </Select> */}
   </div>
   <Input
     id='city'
     name='city'
     type='string'
+    key={'city'+thisopenReminder+index}
     sx={{
       maxWidth: 300,
       mx: 'auto',
       px: 3
     }}
     placeholder='Athens'
-    value={reminder && reminder[thisopenReminder] &&reminder[thisopenReminder].city}
-    onChange = {handleReminderChange}
+    value={day.city}
+    onChange = {e=>handleReminderChange(e,index)}
   />
   <Label htmlFor='reminder'>Reminder</Label>
   <Textarea
     id='reminder'
     name='reminder'
+    key={'reminder'+thisopenReminder+index}
     type='string'
-    value={reminder && reminder[thisopenReminder] && reminder[thisopenReminder].reminder}
+    value={day.reminder}
     maxLength={30}
-    onChange = {handleReminderChange}
+    onChange = {e=>handleReminderChange(e,index)}
   />
-  <Button variant='outline' mr={2}>Add Reminder</Button>
+  </React.Fragment>
+})}
+
+  <Button variant='outline' mr={2} onClick={addNewReminder}>Add Reminder</Button>
 </Box>
       </div>
 
