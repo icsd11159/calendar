@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from 'react';
 import "./calendarStyle.css";
+import {getWeather} from '../services/api.js'
 import { Box,
   Button,
   Heading,
@@ -13,35 +14,162 @@ import { Box,
 function Calendar(props) {
   // your calendar implementation Goes here!
   // Be creative
-  const days =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] ;
+  const daysString =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] ;
+  const monthString =['January', 'February','March','April','May', 'June', 'Jule', 'August', 'September', 'October', 'November', 'December'] ;
+  const days =[0, 1, 2, 3, 4, 5, 6] ;
   //const time = ['00:00','01:00'] for select time
-  const [reminder, setReminder] = useState({'28-Sunday':[{time:'00:00', day:'28-Sunday',city:'Athens',reminder:'GoToMAS'}]});
+  const [reminder, setReminder] = useState({'28-0':[{time:'00:00', day:'28-0',city:'Athens',reminder:'GoToMAS'}]});
   const [openReminder, setOpenReminder] = useState(false);
-  const [thisopenReminder, setthisopenReminder] = useState('28-Sunday');
+  const [thisopenReminder, setthisopenReminder] = useState('28-0');
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState('2022');
+  const [prevyear, setprevYear] = useState('2021');
+  const [nextyear, setnextYear] = useState('2023');
+ 
+  const [prevmonths, setprevmonths] = useState([]);
+  const [nextmonths, setnextmonths] = useState([]);
+  
   useEffect(() => {
     localStorage.setItem('reminder', JSON.stringify(reminder));
   }, [reminder]);
-// const items = JSON.parse(localStorage.getItem('items'));
-  let getDaysArray = (year, month) =>{
-    var monthIndex = month - 1; // 0..11 instead of 1..12
-    var names = days;
-    var date = new Date(year, monthIndex, 1);
-    var result = [];
-    while (date.getMonth() == monthIndex) {
-      result.push(date.getDate() + '-' + names[date.getDay()]);
-      date.setDate(date.getDate() + 1);
+
+
+  let getDaysArray = (prevyear=null) =>{
+    let thisyear= prevyear?prevyear:year
+    let monthAll=[]
+    for(let m=0; m<12; m++ ){
+    let names = days;
+    let date = new Date(thisyear, m, 1);
+    let result = [];
+      while (date.getMonth() == m) {
+        result.push(date.getDate() + '-' + names[date.getDay()]);
+        date.setDate(date.getDate() + 1);
+      }
+      monthAll.push(result)
     }
-    return result;
+  
+    return monthAll;
   }
-  const handleReminderChange = (event,index) => {
+  const [allmonths, setallMonths] = useState(getDaysArray());
+  const [daysofPastMonth, setdaysofPastMonth] = useState(allmonths[month-1]);
+  const [daysofNextMonth, setdaysofNextMonth] = useState(allmonths[month+1]);
+  
+  useEffect(() => {
+    setallMonths(getDaysArray());
+    setprevmonths(getDaysArray(prevyear));
+    setnextmonths(getDaysArray(nextyear));
+  }, [year]);
+/*   useEffect(() => {
+    setdaysofPastMonth(allmonths && allmonths[month-1]);
+    setdaysofNextMonth(allmonths && allmonths[month-1])
+  }, [month]); */
+  const  getWeatherCity=()=>{
+   
+    let result='Rainy';
     console.log(reminder);
+
+    let url = 'forecasts/v1/daily/5day/AIzaSyDFXtbSXAtxY1z9TtGhVUIRWlyizReXEc8?';
+    reminder[thisopenReminder] && reminder[thisopenReminder][0] && reminder[thisopenReminder][0].city && getWeather(url).then((res)=>{
+      if(res && res.data){
+      console.log(res); //i am letting this as I can not make API call because I don't have API KEY
+      result='Rainy'
+    }else{
+      result='Rainy'
+     }
+       
+    }).catch((err) => {
+     //=this.setState({ errorMessage: "Error with the users: " + err });
+     result='Rainy'
+
+      console.log(err);
+    });
+    let addweather={...reminder};
+    addweather[thisopenReminder][0].weather=result
+  
+
+    setReminder(addweather)
+  }
+   
+
+ 
+  let daysofMonth = allmonths && allmonths[month];
+  //let daysofPastMonth = allmonths && allmonths[month-1];
+  //let daysofNextMonth = allmonths && allmonths[month+1];
+  let firstDay=daysofMonth && daysofMonth[0] && parseInt(daysofMonth[0].split('-')[1]);
+  let nextDaysMonth=0;
+ 
+
+// const items = JSON.parse(localStorage.getItem('items'));
+
+  const handleReminderChange = (event,index) => {
+ 
     let editReminder={...reminder};
     editReminder[thisopenReminder][index]={ ...editReminder[thisopenReminder][index],[event.target.id]:event.target.value}
     setReminder(editReminder)
-    console.log(reminder);
+
 
   }
+  const prevMont = ()=>{
+    console.log(month);
 
+    if(month===1){
+     
+      setMonth(0)
+      console.log('prevmonths');
+      console.log(prevmonths);
+      daysofMonth = allmonths && allmonths[0];
+      setdaysofPastMonth(prevmonths && prevmonths[1]);
+      setdaysofNextMonth(allmonths && allmonths[month+1]);
+
+    //  daysofPastMonth = prevmonths && prevmonths[11];
+      //daysofNextMonth = nextmonths && nextmonths[month+1];
+      firstDay=daysofMonth && daysofMonth[0] && parseInt(daysofMonth[0].split('-')[1]);
+      nextDaysMonth=0;
+    } else if(month===0){
+     
+      setprevYear(''+(parseInt(year)-2)+'')
+      setnextYear(year)
+      setallMonths(prevmonths)
+      setYear(''+(parseInt(year)-1)+'')
+      setMonth(11)
+      setdaysofPastMonth(prevmonths && prevmonths[1]);
+      setdaysofNextMonth(allmonths && allmonths[month+1])
+      }else{
+        setdaysofPastMonth(allmonths && allmonths[month-1]);
+    setdaysofNextMonth(allmonths && allmonths[month+1])
+    setMonth(month-1)
+
+    }
+   
+  
+  }
+  const nextMont = ()=>{
+    if(month===10){
+      setMonth(month+1)
+      setallMonths(nextmonths)
+
+      daysofMonth = allmonths && allmonths[1];
+  
+      setdaysofPastMonth(prevmonths && prevmonths[month-1]);
+      setdaysofNextMonth(nextmonths && nextmonths[0]);
+      firstDay=daysofMonth && daysofMonth[0] && parseInt(daysofMonth[0].split('-')[1]);
+    } if(month===11){
+   
+      setMonth(0)
+      setnextYear(''+(parseInt(year)+2)+'')
+      setprevYear(year)
+      setYear(''+(parseInt(year)+1)+'')
+      setdaysofPastMonth(allmonths && allmonths[11]);
+      setdaysofNextMonth(nextmonths && nextmonths[1])
+      
+      }else{
+     
+      setdaysofPastMonth(allmonths && allmonths[month]);
+      setdaysofNextMonth(allmonths && allmonths[month+2])
+      setMonth(month+1)
+    }
+
+  }
   const addNewReminder = () =>{
     let newReminder={...reminder};
     if(newReminder[thisopenReminder] === undefined){
@@ -52,25 +180,31 @@ function Calendar(props) {
     setReminder(newReminder); 
  
   }
-  let daysofMonth = getDaysArray(2022,9);
-  let daysofPastMonth = getDaysArray(2022,8);
-  let daysofNextMonth = getDaysArray(2022,10);
-let firstDay;
-let nextDaysMonth=0;
+
+  const removeReminder = (time,index) => {
+    let newr={...reminder};
+    newr[thisopenReminder]=newr[thisopenReminder].filter((rem,ind)=>rem.time!==time)
+
+    setReminder(newr)
+  }
+
+
+
   return (
     <div className="container">
       
         <h1>Calendar</h1> 
-        <h3>September</h3> 
+        <div style={{display:'flex',padding:'1px'}}>
+        <span style={{ width:'30%' ,marginTop: '1rem', cursor: 'pointer'}} onClick={prevMont}>{' prev  '}</span><span style={{ width:'40%', textAlign:'center', fontWeight:'bold', fontSize:'medium'}}>{monthString[month]}{' '}{year}</span><span style={{ width:'30%', textAlign:'right', cursor: 'pointer'}} onClick={nextMont}>{'  next '}</span>
+        </div>
         <div style={{display: 'flex',height: '100%'}}>
-          {days.map((day,placement)=>{
-            let thisweekdays=daysofMonth.filter((d,ind)=>d.split('-')[1]===day)
-            if(parseInt(thisweekdays[0].split('-')[0])===1){
-              firstDay=placement;
-            }
-            if(firstDay===undefined){
-              thisweekdays= [daysofPastMonth[daysofPastMonth.findLastIndex((t) => (t.split('-')[1]===day))],...thisweekdays]
-            //  pastDaysMonth--;
+          {daysofMonth && daysofMonth[0] && daysofPastMonth && daysofPastMonth[0] &&  days.map((day,placement)=>{
+            
+            let thisweekdays=daysofMonth.filter((d,ind)=>parseInt(d.split('-')[1])===day)
+          
+            if(placement<firstDay && firstDay-placement<5){
+              thisweekdays= [daysofPastMonth[daysofPastMonth.findLastIndex((t) => (parseInt(t.split('-')[1])===day))],...thisweekdays]
+            
             }else if(placement>firstDay && thisweekdays.length<5){
               thisweekdays= [...thisweekdays,daysofNextMonth[nextDaysMonth]]
               nextDaysMonth++;
@@ -79,14 +213,16 @@ let nextDaysMonth=0;
             return (
               <div className='header'>
             <div className='header-titles'>
-            {day}
+            {daysString[placement]}
             </div>
-            { thisweekdays.map((week,w)=>{
+            { thisweekdays && thisweekdays[0] && thisweekdays.map((week,w)=>{
             return (
             <div className='buttonDays'
              style={{
-              color:week.split('-')[1]==='Sunday' || week.split('-')[1]==='Saturday'?'blue':'black',
-              backgroundColor:week.split('-')[1]==='Sunday' || week.split('-')[1]==='Saturday'?'lightgrey':'white'
+              padding:'2px',
+              fontWeight:'bold',
+              color:parseInt(week.split('-')[1])===0 || parseInt(week.split('-')[1]===6)?'rgb(6, 85, 122)':'black',
+              backgroundColor:parseInt(week.split('-')[1])===0 || parseInt(week.split('-')[1])===6?'lightgrey':'white'
              }}
              onClick={() => {
               setOpenReminder(true)
@@ -96,38 +232,45 @@ let nextDaysMonth=0;
              <div>
             {week ?week.split('-')[0]:''}
             </div>
-            {reminder && reminder[week] && reminder[week].map((dot)=>{
-              return <Text label='dd' onMouseOver={'dfdv'} style={{color:'yellow'}} >{dot.time} <br/></Text>
-            })}
-           {/*   {reminder && reminder[week] ?
-             <a style={{color:'yellow'}} label={'dvd'}>reminder[week].length+ ' Reminder(s)'
-              </a>
-              :null} */}
+     
+              
+              {reminder && reminder[week] && <Text label='dd'  style={{color:'black'}} >{reminder[week].length} reminder(s) <br/></Text>}
+              {reminder && reminder[week] && reminder[week][0] && reminder[week][0].city && reminder[week][0].weather && <Text label='dd'  style={{color:'black'}} >{reminder[week][0].city} :  {reminder[week][0].weather} <br/></Text>}
+               
+      
             </div>)
             })}
           
             </div>
             )
           })}
-          
+ 
 <Box
   display={openReminder?'block':'none'}
   style={{
-    backgroundColor:'yellow',
+    border:  '1px solid black',
+    backgroundColor:'white',
+    color:'rgb(6, 85, 122)',
     position: 'absolute',
     maxHeight: '40%',
     padding: '1%',
-    overflowY: 'scroll'
+    overflowY: 'scroll',
+    width:'300px',
+    boxShadow: '3px 8px grey'
+
   }}
   sx={{
     mx: 'auto',
     px: 3
   }}>
-   <Heading> Reminder for {thisopenReminder}<Button variant='outline' mr={1} onClick={e=>setOpenReminder(false)}>X</Button></Heading> 
-{console.log(reminder[thisopenReminder])} 
+<Heading color={'rgb(6, 85, 122)'}  textAlign='center'> Reminder for {thisopenReminder.split('-')[0]}/{month}</Heading> 
+<div style={{borderTop: '2px solid rgb(6, 85, 122)'}}></div>
+
 {reminder && reminder[thisopenReminder] && reminder[thisopenReminder].map((day,index)=>{
- return <React.Fragment>
-  <div style={{display:'flex'}}>
+ return <React.Fragment key={'fragment'+thisopenReminder+index}>
+  
+  <div style={{display:'flex',padding:'2px'}}>
+  Time:
   <Input
     id='time'
     name='time'
@@ -144,23 +287,9 @@ let nextDaysMonth=0;
     onChange = {e=>handleReminderChange(e,index)}
   />
 
-{/*   <Select
-    id='timeh'
-    name='timeh'
-    sx={{
-      width: 80
-    }}
-    defaultValue='pm'>
-      <option
-        key='pm'>
-        pm
-      </option>
-      <option
-        key='am'>
-        am
-      </option>
-  </Select> */}
   </div>
+  <div>
+  City:
   <Input
     id='city'
     name='city'
@@ -172,9 +301,10 @@ let nextDaysMonth=0;
       px: 3
     }}
     placeholder='Athens'
-    value={day.city}
+    value={reminder[thisopenReminder] && reminder[thisopenReminder][0] && reminder[thisopenReminder][0].city}
     onChange = {e=>handleReminderChange(e,index)}
   />
+  </div>
   <Label htmlFor='reminder'>Reminder</Label>
   <Textarea
     id='reminder'
@@ -185,11 +315,15 @@ let nextDaysMonth=0;
     maxLength={30}
     onChange = {e=>handleReminderChange(e,index)}
   />
+    <Button backgroundColor={'red'} marginTop={'2px'} variant='outline' mr={2} onClick={e=>{removeReminder(day.time,index)}}>Remove Reminder</Button>
+   <div style={{borderTop: '2px solid rgb(6, 85, 122)'}}></div>
   </React.Fragment>
 })}
 
-  <Button variant='outline' mr={2} onClick={addNewReminder}>Add Reminder</Button>
+  <Button backgroundColor={'green'} marginTop={'2px'} variant='outline' mr={2} onClick={addNewReminder}>Add Reminder</Button>
+  <Button backgroundColor={'rgb(6, 85, 122)'} marginTop={'2px'}   variant='outline' mr={1} onClick={e=>{setOpenReminder(false);getWeatherCity()}}>OK</Button>
 </Box>
+  
       </div>
 
     </div>
